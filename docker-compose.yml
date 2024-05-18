@@ -1,0 +1,47 @@
+version: '3.8'
+services:  
+
+  postgres:
+    image: postgres:alpine
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: postgres1234
+    volumes:
+      - /var/lib/postgresql/data      
+    networks:
+      - test
+    ports:
+      - "5432:5432"
+
+  nats-streaming:
+    image: nats-streaming:0.25.6-alpine3.18
+    container_name: nats
+    command: "--cluster_name NATS -jetstream"
+    volumes:
+      - /var/lib/nats/data      
+    networks:
+      - test
+    ports:
+      - "8222:8222"
+      - "4222:4222"
+
+  app:
+    build:
+      dockerfile: Dockerfile
+    container_name: api      
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+      - nats-streaming
+    env_file:
+      - .env
+    networks:
+      - test
+
+networks:
+  test:
+    name: test
