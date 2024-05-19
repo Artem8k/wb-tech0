@@ -71,7 +71,7 @@ func (r Repository) GetFromDb(uid string) models.Order {
 	}
 
 	err = r.db.Client.Get(&o,
-		`SELECT * FROM "Order" WHERE "uid" = $1 `, uid)
+		`SELECT * FROM "order" WHERE "uid" = $1 `, uid)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -98,6 +98,12 @@ func (r Repository) Create(o models.Order) {
 		}
 	}()
 
+	err = r.createOrder(o)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	err = r.createDelivery(o.Delivery, o.OrderUid)
 
 	if err != nil {
@@ -111,12 +117,6 @@ func (r Repository) Create(o models.Order) {
 	}
 
 	err = r.createPayment(o.Payment, o.OrderUid)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	err = r.createOrder(o)
 
 	if err != nil {
 		fmt.Println(err)
@@ -138,7 +138,7 @@ func (r Repository) UpdateCacheOnStartUp() {
 	var o []models.Order
 
 	err := r.db.Client.Select(&o,
-		`SELECT * FROM "Order"`)
+		`SELECT * FROM "order"`)
 
 	if err != nil {
 		fmt.Println(err)
@@ -163,7 +163,7 @@ func (r Repository) getDelivery(uid string) (models.Delivery, error) {
 	var d models.Delivery
 
 	err := r.db.Client.Get(&d,
-		`SELECT * FROM "Delivery" WHERE "order_uid" = $1 `, uid)
+		`SELECT * FROM "delivery" WHERE "order_uid" = $1 `, uid)
 
 	return d, err
 }
@@ -172,7 +172,7 @@ func (r Repository) getItems(uid string) ([]models.Item, error) {
 	var i []models.Item
 
 	err := r.db.Client.Select(&i,
-		`SELECT * FROM "Item" WHERE "order_uid" = $1 `, uid)
+		`SELECT * FROM "item" WHERE "order_uid" = $1 `, uid)
 
 	return i, err
 }
@@ -181,7 +181,7 @@ func (r Repository) getPayment(uid string) (models.Payment, error) {
 	var p models.Payment
 
 	err := r.db.Client.Get(&p,
-		`SELECT * FROM "Payment" WHERE "order_uid" = $1 `, uid)
+		`SELECT * FROM "payment" WHERE "order_uid" = $1 `, uid)
 
 	return p, err
 }
@@ -189,8 +189,8 @@ func (r Repository) getPayment(uid string) (models.Payment, error) {
 func (r Repository) createDelivery(d models.Delivery, order_uid string) error {
 
 	_, err := r.db.Client.Exec(
-		`INSERT INTO "Delivery" (order_uid, name, phone, zip, city, adress, region, email) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
-		order_uid, d.Name, d.Phone, d.Zip, d.City, d.Adress, d.Region, d.Email)
+		`INSERT INTO "delivery" (order_uid, name, phone, zip, city, address, region, email) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
+		order_uid, d.Name, d.Phone, d.Zip, d.City, d.Address, d.Region, d.Email)
 
 	return err
 }
@@ -200,7 +200,7 @@ func (r Repository) createItems(i []models.Item, order_uid string) error {
 
 	for _, elem := range i {
 		_, err = r.db.Client.Exec(
-			`INSERT INTO "Item" (order_uid, chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status)
+			`INSERT INTO "item" (order_uid, chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status)
 			VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
 			order_uid, elem.Chrt_id, elem.Track_number, elem.Price, elem.Rid, elem.Name, elem.Sale, elem.Size, elem.Total_price, elem.Nm_id, elem.Brand, elem.Status)
 	}
@@ -211,7 +211,7 @@ func (r Repository) createItems(i []models.Item, order_uid string) error {
 func (r Repository) createPayment(p models.Payment, order_uid string) error {
 
 	_, err := r.db.Client.Exec(
-		`INSERT INTO "Payment" (order_uid, transaction, currency, provider, request_id, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee)
+		`INSERT INTO "payment" (order_uid, transaction, currency, provider, request_id, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee)
 		VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
 		order_uid, p.Transaction, p.Currency, p.Provider, p.Request_id, p.Amount, p.Payment_dt, p.Bank, p.Delivery_cost, p.Goods_total, p.Custom_fee)
 
@@ -221,7 +221,7 @@ func (r Repository) createPayment(p models.Payment, order_uid string) error {
 func (r Repository) createOrder(o models.Order) error {
 
 	_, err := r.db.Client.Exec(
-		`INSERT INTO "Order" (uid, track_number, entry, locale, internal_signature, customer_id, delivery_service, shardkey, sm_id, date_created, oof_shard)
+		`INSERT INTO "order" (uid, track_number, entry, locale, internal_signature, customer_id, delivery_service, shardkey, sm_id, date_created, oof_shard)
 		VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
 		o.OrderUid, o.Track_number, o.Entry, o.Locale, o.Internal_signature, o.Customer_id, o.Delivery_service, o.Shardkey, o.Sm_id, o.Date_created, o.Oof_shard)
 
