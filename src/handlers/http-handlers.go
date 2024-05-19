@@ -9,10 +9,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type OrderHandler interface {
-	GetOrders(w http.ResponseWriter, req *http.Request)
-}
-
 type Handlers struct {
 	service service.Service
 }
